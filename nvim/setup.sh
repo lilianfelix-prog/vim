@@ -17,24 +17,10 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 # =============================================================
 # 1. System dependencies
 # =============================================================
-info "Installing system dependencies..."
-sudo apt update -y
 sudo apt install -y \
-    git \
-    curl \
-    nodejs \
-    npm \
-    clangd \
-    python3-pip \
-    universal-ctags \
-    ripgrep \
-    fd-find \
-    bear \
-    unzip \
-    wget \
-    fontconfig \
-    shellcheck
-
+    git curl nodejs npm clangd python3-pip \
+    universal-ctags ripgrep fd-find bear \
+    unzip wget fontconfig shellcheck
 # =============================================================
 # 2. tree-sitter CLI
 # =============================================================
@@ -44,16 +30,19 @@ sudo npm install -g tree-sitter-cli
 # =============================================================
 # 3. Neovim (latest AppImage)
 # =============================================================
-info "Downloading latest Neovim AppImage..."
-cd /tmp
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage
-chmod +x nvim-linux-x86_64.appimage
+info "Checking Neovim..."
 
-info "Installing Neovim to /usr/local/bin/nvim..."
-sudo mv nvim-linux-x86_64.appimage /usr/local/bin/nvim
+if ! command -v nvim >/dev/null || ! nvim --version | head -1 | grep -q "v0.10"; then
+    info "Installing/updating Neovim..."
 
-nvim --version | head -1 || error "Neovim installation failed"
+    cd /tmp
+    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage
+    chmod +x nvim-linux-x86_64.appimage
 
+    sudo mv nvim-linux-x86_64.appimage /usr/local/bin/nvim
+else
+    warn "Neovim already installed, skipping"
+fi
 # =============================================================
 # 4. Neovim config directories
 # =============================================================
@@ -127,7 +116,7 @@ set incsearch
 set hlsearch
 " Clear search highlight
 nnoremap <leader>h :nohlsearch<CR>
-
+tnoremap jk <C-\><C-n>
 " =========================
 " COC CONFIG
 " =========================
@@ -209,18 +198,14 @@ EOF
 # =============================================================
 # 9. Install vim-plug plugins
 # =============================================================
-info "Installing Neovim plugins via PlugInstall..."
-nvim --headless +PlugInstall +qall 2>/dev/null || warn "PlugInstall had warnings — usually fine"
-
+info "Installing plugins..."
+nvim --headless "+PlugInstall" "+qall" || warn "PlugInstall failed (first run only)"
 # =============================================================
 # 10. Install CoC extensions
 # =============================================================
-info "Installing CoC extensions..."
 nvim --headless \
     +"CocInstall -sync coc-clangd coc-pyright coc-sh coc-json coc-yaml" \
-    +qall 2>/dev/null || warn "CocInstall had warnings — run manually on first launch if needed"
-
-
+    +qall || warn "CoC install skipped or failed"
 # =============================================================
 # 11. JetBrainsMono Nerd Font
 # =============================================================
@@ -228,13 +213,13 @@ info "Installing JetBrainsMono Nerd Font..."
 mkdir -p ~/.local/share/fonts
 cd ~/.local/share/fonts
 
-if [ ! -d "JetBrainsMono" ]; then
-    wget -q --show-progress \
-        https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+if [ ! -d ~/.local/share/fonts/JetBrainsMono ]; then
+    info "Installing JetBrainsMono Nerd Font..."
+    wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
     unzip -q JetBrainsMono.zip -d JetBrainsMono
     rm JetBrainsMono.zip
 else
-    warn "JetBrainsMono already exists, skipping download"
+    warn "Font already installed, skipping"
 fi
 
 info "Refreshing font cache..."
