@@ -32,7 +32,8 @@ sudo apt install -y \
     bear \
     unzip \
     wget \
-    fontconfig
+    fontconfig \
+    shellcheck
 
 # =============================================================
 # 2. tree-sitter CLI
@@ -118,7 +119,7 @@ set signcolumn=yes
 " Better splits
 set splitright
 set splitbelow
-
+set path+=**
 " =========================
 " SEARCH
 " =========================
@@ -218,6 +219,7 @@ info "Installing CoC extensions..."
 nvim --headless \
     +"CocInstall -sync coc-clangd coc-pyright coc-sh coc-json coc-yaml" \
     +qall 2>/dev/null || warn "CocInstall had warnings — run manually on first launch if needed"
+
 
 # =============================================================
 # 11. JetBrainsMono Nerd Font
